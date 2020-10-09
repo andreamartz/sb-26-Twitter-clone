@@ -1,0 +1,5 @@
+requirements-orig.txt
+.DS_Store
+solution/
+venv/
+__pycache__/
