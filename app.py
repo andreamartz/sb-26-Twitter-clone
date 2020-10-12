@@ -61,9 +61,11 @@ def signup():
 
     If form not valid, present form.
 
-    If the there already is a user with that username: flash message
+    If there already is a user with that username: flash message
     and re-present form.
     """
+
+    do_logout()
 
     form = UserAddForm()
 
@@ -113,9 +115,8 @@ def login():
 def logout():
     """Handle logout of user."""
 
-    # IMPLEMENT THIS
-
     do_logout()
+
     flash("Log out was successful.", "success")
 
     return redirect('/login')
@@ -232,13 +233,13 @@ def show_likes(user_id):
 def profile():
     """Update profile for current user."""
 
-    user = g.user
-    form = UserEditForm(obj=user)
-
     # if there is no logged in user
-    if not user:
+    if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
+
+    user = g.user
+    form = UserEditForm(obj=user)
 
     # if CSRF token validated
     if form.validate_on_submit():
@@ -262,7 +263,7 @@ def profile():
 
     # if CSRF token not validated
     else:
-        return render_template('users/edit.html', form=form)
+        return render_template('users/edit.html', form=form, user_id=user.id)
 
 
 @app.route('/users/delete', methods=["POST"])
@@ -323,7 +324,12 @@ def messages_destroy(message_id):
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    msg = Message.query.get(message_id)
+    msg = Message.query.get_or_404(message_id)
+
+    if msg.user_id != g.user.id:
+        flash('Access unauthorized.', 'danger')
+        return redirect("/")
+
     db.session.delete(msg)
     db.session.commit()
 
@@ -383,12 +389,20 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
+        
+        liked_msg_ids = [msg.id for msg in g.user.likes]
 
-        return render_template('home.html', messages=messages)
+        return render_template('home.html', messages=messages, likes=liked_msg_ids)
 
     else:
         return render_template('home-anon.html')
 
+
+@app.errorhandler(404)
+def page_not_found(e):
+    """404 NOT FOUND page."""
+
+    return render_template('404.html'), 404
 
 ##############################################################################
 # Turn off all caching in Flask
