@@ -155,7 +155,10 @@ def users_show(user_id):
                 .order_by(Message.timestamp.desc())
                 .limit(100)
                 .all())
-    return render_template('users/show.html', user=user, messages=messages)
+
+    likes = [msg.id for msg in user.likes]
+
+    return render_template('users/show.html', user=user, likes=likes, messages=messages)
 
 
 @app.route('/users/<int:user_id>/following')
@@ -210,6 +213,19 @@ def stop_following(follow_id):
     db.session.commit()
 
     return redirect(f"/users/{g.user.id}/following")
+
+
+@app.route('/users/<int:user_id>/likes')
+def show_likes(user_id):
+    """Show a user's liked messages."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+
+    return render_template('users/likes.html', user=user, likes=user.likes)
 
 
 @app.route('/users/profile', methods=["GET", "POST"])
@@ -312,6 +328,36 @@ def messages_destroy(message_id):
     db.session.commit()
 
     return redirect(f"/users/{g.user.id}")
+
+
+@app.route('/messages/<int:message_id>/like', methods=["POST"])
+def add_like(message_id):
+    """Toggle a message's like status for a logged-in user if the user is NOT the author."""
+
+    # unauthorized user
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    msg = Message.query.get_or_404(message_id)
+
+    # if the message was written by logged in user
+    if msg.user_id == g.user.id:
+        return abort(403)
+
+    # logged in user's set of likes
+    user_likes = g.user.likes
+
+    # add like to user's likes
+    # or remove it (to unlike the msg) if already there
+    if msg in user_likes:
+        g.user.likes = [like for like in user_likes if like != msg]
+    else:
+        g.user.likes.append(msg)
+
+    db.session.commit()
+
+    return redirect("/")
 
 
 ##############################################################################
