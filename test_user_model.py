@@ -35,15 +35,32 @@ app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
 
 
 class UserModelTestCase(TestCase):
-    """Test views for messages."""
+    """Test model for users."""
 
+    # runs before each test
     def setUp(self):
-        """Create test client, add sample data."""
+        """Add sample data."""
 
-        User.query.delete()
-        Message.query.delete()
-        Follows.query.delete()
+        # Drop all database tables and re-create them
+        db.drop_all()
+        db.create_all()
 
+        # Create two new users
+        user1 = User.signup("allison", "allison@allison.com",
+                            "allison", "http://lorempixel.com/400/400/people/1")
+        user1.id = 1111
+
+        user2 = User.signup("jackson", "jackson@jackson.com", "jackson", None)
+        user2.id = 2222
+
+        # Add the new users to the database
+        db.session.commit()
+
+        # Attach the users to this test case
+        self.user1 = user1
+        self.user2 = user2
+
+        # set the testing client server
         self.client = app.test_client()
 
     def test_user_model(self):
