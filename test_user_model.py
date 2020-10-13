@@ -63,6 +63,13 @@ class UserModelTestCase(TestCase):
         # set the testing client server
         self.client = app.test_client()
 
+    # runs after each test
+    def tearDown(self):
+        """Remove sample data."""
+
+        db.session.rollback()
+
+    ################################
     def test_user_model(self):
         """Does basic model work?"""
 
