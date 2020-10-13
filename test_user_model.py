@@ -99,3 +99,22 @@ class UserModelTestCase(TestCase):
         self.assertEqual(
             repr(self.user2), "<User #2222: jackson, jackson@jackson.com>")
 
+    ################################
+    #
+    # Test following
+    #
+    ################################
+    def test_user_following(self):
+        """Does the following relationship accurately show when user1 is following user2?"""
+
+        self.user1.following.append(self.user2)
+        db.session.commit()
+
+        # test if user2 is in the list of users that user1 is following
+        self.assertIn(self.user2, self.user1.following)
+        self.assertNotIn(self.user1, self.user2.following)
+        self.assertEqual(len(self.user1.following), 1)
+        self.assertEqual(len(self.user1.followers), 0)
+        self.assertEqual(len(self.user2.following), 0)
+        self.assertEqual(len(self.user2.followers), 1)
+
