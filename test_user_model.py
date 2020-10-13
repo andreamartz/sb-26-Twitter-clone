@@ -150,3 +150,61 @@ class UserModelTestCase(TestCase):
         self.assertFalse(self.user1.is_followed_by(self.user2))
         self.assertFalse(self.user2.is_followed_by(self.user1))
 
+    ################################
+    #
+    # Test user creation
+    #
+    ################################
+    def test_create_user(self):
+        """Does User.signup successfully create a new user given valid credentials?"""
+
+        user3_test = User.signup("username3", "email3@email3.com", "password3", None)
+        db.session.commit()
+
+        self.assertTrue(user3_test)
+        self.assertEqual(user3_test.username, "username3")
+        self.assertEqual(user3_test.email, "email3@email3.com")
+        self.assertNotEqual(user3_test.password, "password3")
+
+        #Bcrypt strings start with '$2b$'
+        self.assertTrue(user3_test.password.startswith("$2b$"))
+
+    def test_create_user_fail_missing_username(self):
+        """Does User.signup fail to create a new user when username is missing?"""
+        invalid_user = User.signup(None, "email@email.com", "password", None)
+
+        with self.assertRaises(exc.IntegrityError) as context:
+            db.session.commit()
+            
+        # self.assertFalse(invalid_user)
+
+
+    def test_create_user_fail_email_missing(self):
+        """Does User.signup fail to create a new user when email address is missing?"""
+
+        invalid_user = User.signup("username", None, "password", None)
+        with self.assertRaises(exc.IntegrityError) as context:
+            db.session.commit()
+
+
+    def test_create_user_fail_email_invalid(self):
+        """Does User.signup fail to create a new user when email address given has invalid format?"""
+
+        invalid_user = User.signup("username", "emailemail.com", "password", None)
+        with self.assertRaises(exc.IntegrityError) as context:
+            db.session.commit()
+
+    def test_create_user_fail_password_missing(self):
+        """Does User.signup fail to create a new user when password is missing?"""
+
+        with self.assertRaises(ValueError) as context:
+            invalid_user = User.signup("username", "email@email.com", None, None)
+            db.session.commit()
+
+    def test_create_user_fail_password_too_short(self):
+        """Does User.signup fail to create a new user when password is too short?"""
+
+        with self.assertRaises(exc.IntegrityError) as context:
+            invalid_user = User.signup("username", "email@email.com", "abc", None)
+            
+            db.session.commit()
