@@ -134,3 +134,19 @@ class UserModelTestCase(TestCase):
         self.assertFalse(self.user1.is_following(self.user2))
         self.assertFalse(self.user2.is_following(self.user1))
 
+    def test_is_followed_by(self):
+        """Does is_followed_by successfully detect when user1 is followed by user2?"""
+
+        self.user1.followers.append(self.user2)
+        db.session.commit()
+
+        self.assertTrue(self.user1.is_followed_by(self.user2))
+        self.assertFalse(self.user2.is_followed_by(self.user1))
+
+
+    def test_is_followed_by_false(self):
+        """Does is_followed_by successfully detect when user1 is not followed by user2?"""
+
+        self.assertFalse(self.user1.is_followed_by(self.user2))
+        self.assertFalse(self.user2.is_followed_by(self.user1))
+
