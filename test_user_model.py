@@ -70,6 +70,10 @@ class UserModelTestCase(TestCase):
         db.session.rollback()
 
     ################################
+    #
+    # Test User model
+    #
+    ################################
     def test_user_model(self):
         """Does basic model work?"""
 
@@ -82,6 +86,16 @@ class UserModelTestCase(TestCase):
         db.session.add(u)
         db.session.commit()
 
-        # User should have no messages & no followers
+        # User should have no messages & no followers & follow no one & have no likes
         self.assertEqual(len(u.messages), 0)
         self.assertEqual(len(u.followers), 0)
+        self.assertEqual(len(u.following), 0)
+        self.assertEqual(len(u.likes), 0)
+
+
+    def test_user_repr(self):
+        """Does the repr method work as expected?"""
+
+        self.assertEqual(
+            repr(self.user2), "<User #2222: jackson, jackson@jackson.com>")
+
