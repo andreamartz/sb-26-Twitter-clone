@@ -208,3 +208,24 @@ class UserModelTestCase(TestCase):
             invalid_user = User.signup("username", "email@email.com", "abc", None)
             
             db.session.commit()
+
+    ################################
+    #
+    # Test user authentication
+    #
+    ################################
+    def test_auth_user(self):
+        """Does User.authenticate successfully return a user when given a valid username & password?"""
+
+        self.assertEqual(User.authenticate("allison", "allison"), self.user1)
+        self.assertEqual(User.authenticate(self.user2.username, "jackson"), self.user2)
+
+    def test_auth_user_fail_bad_username(self):
+        """Does User.authenticate fail to return a user when the username is invalid?"""
+
+        self.assertFalse(User.authenticate("invalid", "allison"))
+
+    def test_auth_user_fail_bad_password(self):
+        """Does User.authenticate fail to return a user when the password is invalid?"""
+
+        self.assertFalse(User.authenticate(self.user1.username, "invalid"))
