@@ -20,13 +20,18 @@ os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
 
 # Now we can import app
 
-from app import app
+from app import app, CURR_USER_KEY
 
 # Create our tables (we do this here, so we only create the tables
 # once for all tests --- in each test, we'll delete the data
 # and create fresh new clean test data
-
 db.create_all()
+
+# Disable CSRF usage from WTForms, since it's a pain to test
+app.config['WTF_CSRF_ENABLED'] = False
+
+app.config['TESTING'] = True
+app.config['DEBUG_TB_HOSTS'] = ['dont-show-debug-toolbar']
 
 
 class UserModelTestCase(TestCase):
