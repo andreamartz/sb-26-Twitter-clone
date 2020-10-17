@@ -389,7 +389,7 @@ def homepage():
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
-        
+
         liked_msg_ids = [msg.id for msg in g.user.likes]
 
         return render_template('home.html', messages=messages, likes=liked_msg_ids)
@@ -410,6 +410,7 @@ def page_not_found(e):
 #   handled elsewhere)
 #
 # https://stackoverflow.com/questions/34066804/disabling-caching-in-flask
+
 
 @app.after_request
 def add_header(req):
