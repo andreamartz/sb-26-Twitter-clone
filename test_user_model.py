@@ -7,7 +7,7 @@
 
 import os
 from unittest import TestCase
-
+from sqlalchemy.exc import IntegrityError
 from models import db, User, Message, Follows
 
 # BEFORE we import our app, let's set an environmental variable
@@ -173,7 +173,7 @@ class UserModelTestCase(TestCase):
         """Does User.signup fail to create a new user when username is missing?"""
         invalid_user = User.signup(None, "email@email.com", "password", None)
 
-        with self.assertRaises(exc.IntegrityError) as context:
+        with self.assertRaises(IntegrityError) as context:
             db.session.commit()
             
         # self.assertFalse(invalid_user)
@@ -183,15 +183,15 @@ class UserModelTestCase(TestCase):
         """Does User.signup fail to create a new user when email address is missing?"""
 
         invalid_user = User.signup("username", None, "password", None)
-        with self.assertRaises(exc.IntegrityError) as context:
+        with self.assertRaises(IntegrityError) as context:
             db.session.commit()
 
 
     def test_create_user_fail_email_invalid(self):
         """Does User.signup fail to create a new user when email address given has invalid format?"""
 
-        invalid_user = User.signup("username", "emailemail.com", "password", None)
-        with self.assertRaises(exc.IntegrityError) as context:
+        invalid_user = User.signup("username", None, "password", None)
+        with self.assertRaises(IntegrityError) as context:
             db.session.commit()
 
     def test_create_user_fail_password_missing(self):
@@ -201,13 +201,6 @@ class UserModelTestCase(TestCase):
             invalid_user = User.signup("username", "email@email.com", None, None)
             db.session.commit()
 
-    def test_create_user_fail_password_too_short(self):
-        """Does User.signup fail to create a new user when password is too short?"""
-
-        with self.assertRaises(exc.IntegrityError) as context:
-            invalid_user = User.signup("username", "email@email.com", "abc", None)
-            
-            db.session.commit()
 
     ################################
     #
