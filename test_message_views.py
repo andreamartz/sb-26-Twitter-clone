@@ -7,7 +7,7 @@
 
 import os
 from unittest import TestCase
-from models import db, connect_db, Message, User, Likes
+from models import db, connect_db, Message, User, Likes, Follows
 
 # BEFORE we import our app, let's set an environmental variable
 # to use a different database for tests (we need to do this
@@ -41,6 +41,8 @@ class MessageViewTestCase(TestCase):
         # drop the data
         User.query.delete()
         Message.query.delete()
+        Likes.query.delete()
+        Follows.query.delete()
 
         # set the testing client server
         self.client = app.test_client()
@@ -258,6 +260,23 @@ class MessageViewTestCase(TestCase):
     # Test /messages/<int:message_id>/like POST route
     ##############################################
 
+    def setup_likes(self):
+        """Do setup work to be used in tests of showing nad removing users' likes"""
+
+        m1 = Message(text="trending warble", user_id=self.testuser1_id)
+        m2 = Message(text="Eating some lunch", user_id=self.testuser1_id)
+        m3 = Message(id=5151, text="likable warble", user_id=self.testuser2_id)
+        db.session.add_all([m1, m2, m3])
+        db.session.commit()
+
+        # Testuser1 likes message 5151 by testuser2
+        like = Likes(user_id=self.testuser1_id,
+            message_id=5151)
+
+        db.session.add(like)
+        db.session.commit()
+
+
     def test_add_like(self):
         """Is a logged in user able to successfully like another user's message?"""
 
@@ -333,6 +352,61 @@ class MessageViewTestCase(TestCase):
 
             likes = Likes.query.filter(Likes.message_id==7777).all()
             self.assertEqual(len(likes), 0)
+
+    def test_add_like_toggle_to_remove(self):
+        """Can a user successfully remove a like from a message?"""
+
+        self.setup_likes()
+
+        # Recall that in setup_likes() testuser1 liked testuser2's message with id of 5151
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                # self.testuser1 is logged in
+                sess[CURR_USER_KEY] = self.testuser1.id
+
+            # get all likes for testuser1
+            likes1 = Likes.query.filter(Likes.user_id==self.testuser1_id).all()
+
+            self.assertEqual(len(likes1), 1)
+
+            # testuser1 will unlike message 5151
+            resp = c.post('/messages/5151/like', follow_redirects=True)
+            
+            # verify that status_code is 200
+            self.assertEqual(resp.status_code, 200)
+
+            # get all likes for testuser1
+            likes1 = Likes.query.filter(Likes.user_id==self.testuser1_id).all()
+
+            self.assertEqual(len(likes1), 0)
+
+            # get all likes for that msg
+            likes5151 = Likes.query.filter(Likes.message_id==5151).all()
+
+            self.assertEqual(len(likes5151), 0)
+
+    def test_add_like_no_user_in_session(self):
+        self.setup_likes()
+
+        msg = Message.query.get(5151)
+        self.assertIsNotNone(msg)
+
+        likes_before = Likes.query.filter(Likes.message_id == msg.id).count()
+        self.assertEqual(likes_before, 1)
+
+        with self.client as c:
+            resp = c.post(f'/messages/{msg.id}/like', follow_redirects=True)
+
+            likes_after = Likes.query.filter(Likes.message_id == msg.id).count()
+            self.assertEqual(resp.status_code, 200)
+
+            self.assertEqual(likes_after, 1)
+
+
+
+
+
 
 
     # Other possible tests of the app:
