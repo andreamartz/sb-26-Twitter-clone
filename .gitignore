@@ -3,3 +3,4 @@ requirements-orig.txt
 solution/
 venv/
 __pycache__/
+.vscode/
